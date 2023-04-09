@@ -197,7 +197,9 @@ class _LoginState extends State<Login> {
                     Align(
                       alignment: Alignment.topRight,
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          // Incomplete
+                        },
                         child: const Text(
                           "Forgot Password",
                           style: TextStyle(
@@ -218,7 +220,9 @@ class _LoginState extends State<Login> {
                         height: 50,
                         width: 250,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Incomplete
+                          },
                           style: ElevatedButton.styleFrom(
                             primary: Colors.pinkAccent,
                             onPrimary: Colors.pinkAccent,
