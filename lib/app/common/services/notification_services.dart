@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone_updated_gradle/flutter_native_timezone.dart';
 import 'package:get/get.dart';
-
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../../models/task.dart';
+import '../../models/item.dart';
 
 class NotifyHelper {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -92,14 +92,20 @@ class NotifyHelper {
   }
 
   scheduledNotification(
-      Task task, int year, int month, int day, int hour, int minutes) async {
+    Item item,
+    int year,
+    int month,
+    int day,
+    int hour,
+    int minutes,
+  ) async {
     AndroidScheduleMode androidScheduleMode =
         AndroidScheduleMode.exactAllowWhileIdle;
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      task.id!.toInt(),
-      task.title,
-      task.note,
+      item.id!.toInt(),
+      item.name,
+      item.descp,
       _convertTimeToTimeZone(year, month, day, hour, minutes),
       // tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
       const NotificationDetails(
@@ -111,18 +117,23 @@ class NotifyHelper {
       androidScheduleMode: androidScheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: task.repeat == "None"
+      matchDateTimeComponents: item.repeat == "None"
           ? null
-          : (task.repeat == "Daily"
+          : (item.repeat == "Daily"
               ? DateTimeComponents.time
-              : (task.repeat == "Weekly"
+              : (item.repeat == "Weekly"
                   ? DateTimeComponents.dayOfWeekAndTime
                   : DateTimeComponents.dayOfMonthAndTime)),
     );
   }
 
   tz.TZDateTime _convertTimeToTimeZone(
-      int year, int month, int day, int hours, int minute) {
+    int year,
+    int month,
+    int day,
+    int hours,
+    int minute,
+  ) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
     final tz.TZDateTime scheduledDate = tz.TZDateTime(

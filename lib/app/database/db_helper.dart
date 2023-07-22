@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:sqflite/sqflite.dart';
 
-import '../models/task.dart';
+import '../models/item.dart';
 
 class DBHelper {
   static Database? _db;
@@ -23,8 +24,8 @@ class DBHelper {
           return db.execute(
             "CREATE TABLE $_tableName("
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-            "title STRING, note TEXT, date STRING, "
-            "startTime STRING, endTime STRING, "
+            "name STRING, descp TEXT, date STRING, "
+            "notifyTime STRING, "
             "remind INTEGER, repeat STRING, "
             "color INTEGER, "
             "isCompleted INTEGER)",
@@ -36,16 +37,16 @@ class DBHelper {
     }
   }
 
-  static Future<int> insert(Task task) async {
-    return await _db!.insert(_tableName, task.toJson());
+  static Future<int> insert(Item item) async {
+    return await _db!.insert(_tableName, item.toJson());
   }
 
   static Future<List<Map<String, dynamic>>> query() async {
     return await _db!.query(_tableName);
   }
 
-  static delete(Task task) async {
-    await _db!.delete(_tableName, where: "id = ?", whereArgs: [task.id]);
+  static delete(Item item) async {
+    await _db!.delete(_tableName, where: "id = ?", whereArgs: [item.id]);
   }
 
   static update(int id) async {

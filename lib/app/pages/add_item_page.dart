@@ -1,28 +1,31 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:qr_memo/app/common/services/notification_services.dart';
-import 'package:qr_memo/app/common/utils/theme.dart';
-import 'package:qr_memo/app/common/widgets/button.dart';
-import 'package:qr_memo/app/common/widgets/input_field.dart';
 
+import '../common/services/notification_services.dart';
+
+import '../common/utils/theme.dart';
 import '../common/utils/colors.dart';
-import '../controllers/task_controller.dart';
-import '../models/task.dart';
 
-class AddTaskPage extends StatefulWidget {
-  const AddTaskPage({super.key});
+import '../common/widgets/button.dart';
+import '../common/widgets/input_field.dart';
+
+import '../controllers/item_controller.dart';
+
+import '../models/item.dart';
+
+class AddItemPage extends StatefulWidget {
+  const AddItemPage({super.key});
 
   @override
-  State<AddTaskPage> createState() => _AddTaskPageState();
+  State<AddItemPage> createState() => _AddItemPageState();
 }
 
-class _AddTaskPageState extends State<AddTaskPage> {
-  DateTime _selectedDate = DateTime.now();
-  String _endTime = "11:59 PM";
-  String _startTime = "12:00 AM";
+class _AddItemPageState extends State<AddItemPage> {
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  String _notifyTime = "12:00 AM";
 
   int _selectedRemind = 0;
   List<int> remindList = [
@@ -45,10 +48,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
   int _selectedColor = 0;
 
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _noteController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descpController = TextEditingController();
 
-  final TaskController _taskController = Get.put(TaskController());
+  final ItemController _itemController = Get.put(ItemController());
 
   NotifyHelper notifyHelper = NotifyHelper();
 
@@ -64,18 +67,18 @@ class _AddTaskPageState extends State<AddTaskPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Add Task",
+                "Add Item",
                 style: headingStyle,
               ),
               MyInputField(
-                title: "Title",
-                placeholder: "Enter your title",
-                controller: _titleController,
+                title: "Name",
+                placeholder: "Enter item name",
+                controller: _nameController,
               ),
               MyInputField(
-                title: "Note",
-                placeholder: "Enter your note",
-                controller: _noteController,
+                title: "Description",
+                placeholder: "Enter item description",
+                controller: _descpController,
               ),
               MyInputField(
                 title: "Date",
@@ -94,29 +97,11 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 children: [
                   Expanded(
                     child: MyInputField(
-                      title: "Start Time",
-                      placeholder: _startTime,
+                      title: "Notification Time",
+                      placeholder: _notifyTime,
                       widget: IconButton(
                         onPressed: () {
-                          _getTimeFromUser(isStartTime: true);
-                        },
-                        icon: const Icon(
-                          Icons.access_time_outlined,
-                          color: greyClr,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  Expanded(
-                    child: MyInputField(
-                      title: "End Time",
-                      placeholder: _endTime,
-                      widget: IconButton(
-                        onPressed: () {
-                          _getTimeFromUser(isStartTime: false);
+                          _getTimeFromUser();
                         },
                         icon: const Icon(
                           Icons.access_time_outlined,
@@ -195,7 +180,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   MyButton(
                     label: "Create Task",
                     onTap: () {
-                      _validateTask();
+                      _validateItem();
                     },
                   ),
                 ],
@@ -251,7 +236,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
     }
   }
 
-  _getTimeFromUser({required bool isStartTime}) async {
+  _getTimeFromUser() async {
     var pickedTime = await _showTimePicker();
 
     String formattedTime;
@@ -260,7 +245,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
       return;
     }
 
-    // formattedTime = pickedTime.format(context);
     DateTime currentTime = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -270,15 +254,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
     );
     formattedTime = DateFormat('hh:mm a').format(currentTime);
 
-    if (isStartTime == true) {
-      setState(() {
-        _startTime = formattedTime;
-      });
-    } else if (isStartTime == false) {
-      setState(() {
-        _endTime = formattedTime;
-      });
-    }
+    setState(() {
+      _notifyTime = formattedTime;
+    });
   }
 
   _showTimePicker() {
@@ -286,8 +264,8 @@ class _AddTaskPageState extends State<AddTaskPage> {
       initialEntryMode: TimePickerEntryMode.dial,
       context: context,
       initialTime: TimeOfDay(
-        hour: int.parse(_startTime.split(":")[0]),
-        minute: int.parse(_startTime.split(":")[1].split(" ")[0]),
+        hour: int.parse(_notifyTime.split(":")[0]),
+        minute: int.parse(_notifyTime.split(":")[1].split(" ")[0]),
       ),
     );
   }
@@ -337,12 +315,12 @@ class _AddTaskPageState extends State<AddTaskPage> {
     );
   }
 
-  _validateTask() {
-    if (_titleController.text.isNotEmpty && _noteController.text.isNotEmpty) {
-      _addTaskToDb();
+  _validateItem() {
+    if (_nameController.text.isNotEmpty && _descpController.text.isNotEmpty) {
+      _addItemToDb();
       _setNotificationSchedule();
       Get.back();
-    } else if (_titleController.text.isEmpty || _noteController.text.isEmpty) {
+    } else if (_nameController.text.isEmpty || _descpController.text.isEmpty) {
       Get.snackbar(
         "Required",
         "All fields are required",
@@ -360,14 +338,13 @@ class _AddTaskPageState extends State<AddTaskPage> {
     }
   }
 
-  _addTaskToDb() async {
-    await _taskController.addTask(
-      task: Task(
-        title: _titleController.text,
-        note: _noteController.text,
+  _addItemToDb() async {
+    await _itemController.addItem(
+      item: Item(
+        name: _nameController.text,
+        descp: _descpController.text,
         date: DateFormat("dd/MM/yyyy").format(_selectedDate),
-        startTime: _startTime,
-        endTime: _endTime,
+        notifyTime: _notifyTime,
         remind: _selectedRemind,
         repeat: _selectedRepeat,
         color: _selectedColor,
@@ -378,20 +355,19 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
   _setNotificationSchedule() {
     DateTime dateWith24HrTimeFormat =
-        DateFormat("HH:mm a").parse(_startTime.toString());
+        DateFormat("HH:mm a").parse(_notifyTime.toString());
 
     var myTime = DateFormat("HH:mm").format(dateWith24HrTimeFormat);
 
     if (_selectedRemind == 0) {
       // if "NO REMINDER" is selected then schedule notification at "12:00 am" ONLY on the "selected date"
       notifyHelper.scheduledNotification(
-        Task(
-          id: _taskController.taskList.length,
-          title: _titleController.text,
-          note: _noteController.text,
+        Item(
+          id: _itemController.itemList.length,
+          name: _nameController.text,
+          descp: _descpController.text,
           date: DateFormat("dd/MM/yyyy").format(_selectedDate),
-          startTime: _startTime,
-          endTime: _endTime,
+          notifyTime: _notifyTime,
           remind: _selectedRemind,
           repeat: _selectedRepeat,
           color: _selectedColor,
@@ -416,13 +392,12 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
       // schedule notification at "12:00 am", "REMINDER" days before the "selected date"
       notifyHelper.scheduledNotification(
-        Task(
+        Item(
           id: Random().nextInt(1000000),
-          title: _titleController.text,
-          note: _noteController.text,
+          name: _nameController.text,
+          descp: _descpController.text,
           date: DateFormat("dd/MM/yyyy").format(_selectedDate),
-          startTime: _startTime,
-          endTime: _endTime,
+          notifyTime: _notifyTime,
           remind: _selectedRemind,
           repeat: _selectedRepeat,
           color: _selectedColor,
@@ -440,13 +415,12 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
       // schedule notification at "12:00 am" on the "selected date"
       notifyHelper.scheduledNotification(
-        Task(
+        Item(
           id: Random().nextInt(1000000),
-          title: _titleController.text,
-          note: _noteController.text,
+          name: _nameController.text,
+          descp: _descpController.text,
           date: DateFormat("dd/MM/yyyy").format(_selectedDate),
-          startTime: _startTime,
-          endTime: _endTime,
+          notifyTime: _notifyTime,
           remind: _selectedRemind,
           repeat: _selectedRepeat,
           color: _selectedColor,

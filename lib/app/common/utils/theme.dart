@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'colors.dart';
+import './colors.dart';
 
 MaterialColor primaryClrMaterial = bluishClrMaterial;
 

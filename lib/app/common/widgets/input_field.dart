@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
-import 'package:qr_memo/app/common/utils/colors.dart';
-import 'package:qr_memo/app/common/utils/theme.dart';
+
+import '../utils/colors.dart';
+import '../utils/theme.dart';
 
 class MyInputField extends StatelessWidget {
   const MyInputField({

@@ -1,19 +1,25 @@
-import 'package:date_picker_timeline/date_picker_timeline.dart';
 import 'package:flutter/material.dart';
+
+import 'package:date_picker_timeline/date_picker_timeline.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import 'package:qr_memo/app/common/services/notification_services.dart';
-import 'package:qr_memo/app/common/services/theme_services.dart';
-import 'package:qr_memo/app/common/utils/colors.dart';
-import 'package:qr_memo/app/common/utils/theme.dart';
-import 'package:qr_memo/app/common/widgets/button.dart';
-import 'package:qr_memo/app/pages/add_task_page.dart';
-import '../common/widgets/task_tile.dart';
-import '../controllers/task_controller.dart';
-import '../models/task.dart';
+import '../common/services/notification_services.dart';
+import '../common/services/theme_services.dart';
+
+import '../common/utils/colors.dart';
+import '../common/utils/theme.dart';
+
+import '../common/widgets/button.dart';
+import '../common/widgets/item_tile.dart';
+
+import '../pages/add_item_page.dart';
+
+import '../controllers/item_controller.dart';
+
+import '../models/item.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,15 +29,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  DateTime _selectedDate = DateTime.now();
-  final _taskController = Get.put(TaskController());
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  final _itemController = Get.put(ItemController());
 
   NotifyHelper notifyHelper = NotifyHelper();
 
   @override
   void initState() {
     super.initState();
-    _taskController.getTask();
+    _itemController.getItem();
     notifyHelper.initializeNotification();
   }
 
@@ -47,7 +53,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(
             height: 20,
           ),
-          _showTasks(),
+          _showItems(),
         ],
       ),
     );
@@ -117,10 +123,10 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           MyButton(
-            label: "+ Add Task",
+            label: "+ Add Item",
             onTap: () async {
-              await Get.to(() => const AddTaskPage());
-              _taskController.getTask();
+              await Get.to(() => const AddItemPage());
+              _itemController.getItem();
             },
           ),
         ],
@@ -132,10 +138,10 @@ class _HomePageState extends State<HomePage> {
     return Container(
       margin: const EdgeInsets.only(left: 20, top: 20, right: 20),
       child: DatePicker(
-        DateTime.now(),
+        DateTime.now().add(const Duration(days: 1)),
         height: 100,
         width: 80,
-        initialSelectedDate: DateTime.now(),
+        initialSelectedDate: _selectedDate,
         selectionColor: primaryClrMaterial,
         selectedTextColor: whiteClr,
         dateTextStyle: GoogleFonts.lato(
@@ -170,14 +176,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _showTasks() {
+  _showItems() {
     return Expanded(
       child: Obx(
         () {
           return ListView.builder(
-            itemCount: _taskController.taskList.length,
+            itemCount: _itemController.itemList.length,
             itemBuilder: (_, index) {
-              if (_taskController.taskList[index].repeat == "Daily") {
+              if (_itemController.itemList[index].repeat == "Daily") {
                 return AnimationConfiguration.staggeredList(
                   position: index,
                   child: SlideAnimation(
@@ -188,11 +194,13 @@ class _HomePageState extends State<HomePage> {
                             onTap: () {
                               _showBottomSheet(
                                 context,
-                                _taskController.taskList[index],
+                                _itemController.itemList[index],
                               );
                             },
-                            child:
-                                TaskTile(task: _taskController.taskList[index]),
+                            child: ItemTile(
+                              item: _itemController.itemList[index],
+                              onTapDelete: _itemController.removeItem,
+                            ),
                           ),
                         ],
                       ),
@@ -200,7 +208,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 );
               }
-              if (_taskController.taskList[index].date ==
+              if (_itemController.itemList[index].date ==
                   DateFormat("dd/MM/yyyy").format(_selectedDate)) {
                 return AnimationConfiguration.staggeredList(
                   position: index,
@@ -212,11 +220,13 @@ class _HomePageState extends State<HomePage> {
                             onTap: () {
                               _showBottomSheet(
                                 context,
-                                _taskController.taskList[index],
+                                _itemController.itemList[index],
                               );
                             },
-                            child:
-                                TaskTile(task: _taskController.taskList[index]),
+                            child: ItemTile(
+                              item: _itemController.itemList[index],
+                              onTapDelete: _itemController.removeItem,
+                            ),
                           ),
                         ],
                       ),
@@ -233,12 +243,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _showBottomSheet(BuildContext context, Task task) {
+  _showBottomSheet(BuildContext context, Item item) {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.only(top: 4),
         width: MediaQuery.of(context).size.width,
-        height: task.isCompleted == 1
+        height: item.isCompleted == 1
             ? MediaQuery.of(context).size.height * 0.20
             : MediaQuery.of(context).size.height * 0.28,
         color: Get.isDarkMode ? darkGreyClr : whiteClr,
@@ -253,22 +263,22 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const Spacer(),
-            task.isCompleted == 1
+            item.isCompleted == 1
                 ? Container()
                 : _bottomSheetButton(
                     context: context,
-                    label: "Task Completed",
+                    label: "Item Consumed",
                     onTap: () {
-                      _taskController.markTaskCompleted(task.id!);
+                      _itemController.markItemConsumed(item.id!);
                       Get.back();
                     },
                     clr: primaryClrMaterial,
                   ),
             _bottomSheetButton(
               context: context,
-              label: "Delete Task",
+              label: "Remove Item",
               onTap: () {
-                _taskController.deleteTask(task);
+                _itemController.removeItem(item);
                 Get.back();
               },
               clr: pinkClr,

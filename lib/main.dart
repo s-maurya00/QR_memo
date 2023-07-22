@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:get_storage/get_storage.dart';
 
-import 'package:qr_memo/app/pages/home_page.dart';
-import 'package:qr_memo/app/common/utils/theme.dart';
-import 'package:qr_memo/app/common/services/theme_services.dart';
+import 'app/common/services/theme_services.dart';
 
-import 'package:qr_memo/app/database/db_helper.dart';
+import 'app/common/utils/theme.dart';
+
+import 'app/pages/home_page.dart';
+
+import 'app/database/db_helper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'To Do App',
+      title: 'Expiration Tracker',
       theme: Themes.light,
       darkTheme: Themes.dark,
       themeMode: ThemeController().theme,

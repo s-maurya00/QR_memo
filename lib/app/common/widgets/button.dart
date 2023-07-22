@@ -1,13 +1,21 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
-import 'package:qr_memo/app/common/utils/theme.dart';
-import 'package:qr_memo/app/common/utils/colors.dart';
+import '../utils/colors.dart';
+import '../utils/theme.dart';
 
 class MyButton extends StatelessWidget {
-  const MyButton({super.key, required this.label, required this.onTap});
+  const MyButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.color,
+    this.textStyle,
+  });
 
   final String label;
   final Function()? onTap;
+  final Color? color;
+  final TextStyle? textStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +26,20 @@ class MyButton extends StatelessWidget {
         height: 60,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: primaryClrMaterial,
+          border: color == Colors.transparent
+              ? Border.all(
+                  width: 2,
+                  color: Colors.grey.withOpacity(0.2),
+                )
+              : null,
+          color: color ?? primaryClrMaterial,
         ),
         child: Center(
           child: Text(
             label,
             style: const TextStyle(
               color: whiteClr,
-            ),
+            ).merge(textStyle),
           ),
         ),
       ),
